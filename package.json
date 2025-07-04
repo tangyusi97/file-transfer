@@ -1,0 +1,22 @@
+{
+  "name": "file-transfer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon server.js --watch server.js --watch config.js",
+    "bundle": "ncc build server.js -o ./",
+    "build": "ncc build server.js -o dist --minify --source-map"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3",
+    "nodemon": "^3.1.10"
+  }
+}

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <title>文件密传 | 端到端加密文件中转站</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./awesome-qr.min.js" async></script>
+  <script src="./crypto-js.min.js" async></script>
+  <script src="./service.js" async></script>
+  <script src="./ui.js" defer></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="main-content">
+      <div class="left-panel">
+        <div class="tabs-container">
+          <button class="tab active" data-tab="upload">上传文件</button>
+          <button class="tab" data-tab="download">下载文件</button>
+        </div>
+
+        <div class="tab-content active" id="upload-tab">
+
+          <div class="upload-area" id="upload-area">
+            <span class="upload-icon"><svg t="1751439682170" viewBox="0 0 1024 1024" version="1.1"
+                xmlns="http://www.w3.org/2000/svg" p-id="1555" width="56" height="56">
+                <path
+                  d="M512 678.506667a42.666667 42.666667 0 0 0 42.666667-42.666667V252.373333l140.501333 140.458667a42.666667 42.666667 0 0 0 57.621333 2.496l2.709334-2.496a42.666667 42.666667 0 0 0 2.496-57.621333l-2.496-2.709334-213.333334-213.333333a42.666667 42.666667 0 0 0-57.621333-2.496l-2.709333 2.496-213.333334 213.333333a42.666667 42.666667 0 0 0 57.621334 62.826667l2.709333-2.496L469.333333 252.330667v383.509333a42.666667 42.666667 0 0 0 42.666667 42.666667z"
+                  fill="currentColor" p-id="1556"></path>
+                <path
+                  d="M874.666667 618.666667a42.666667 42.666667 0 0 1 42.56 39.466666L917.333333 661.333333v128a128 128 0 0 1-123.2 127.914667L789.333333 917.333333H234.666667a128 128 0 0 1-127.914667-123.2L106.666667 789.333333v-128a42.666667 42.666667 0 0 1 85.226666-3.2L192 661.333333v128a42.666667 42.666667 0 0 0 39.466667 42.56L234.666667 832h554.666666a42.666667 42.666667 0 0 0 42.56-39.466667L832 789.333333v-128a42.666667 42.666667 0 0 1 42.666667-42.666666z"
+                  fill="currentColor" p-id="1557"></path>
+              </svg></span>
+            <p class="upload-text">点击或拖放文件到此处上传</p>
+            <input type="file" id="file-input" hidden>
+          </div>
+
+          <div class="file-info-preview" id="file-preview" style="display: none;">
+            <div class="file-details">
+              <div class="file-icon"><svg t="1751443424315" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                  xmlns="http://www.w3.org/2000/svg" p-id="2955" width="60" height="100">
+                  <path d="M0 0h1024v1024H0z" fill="#FFFFFF" p-id="2956"></path>
+                  <path
+                    d="M102.4 0m81.92 0l655.36 0q81.92 0 81.92 81.92l0 860.16q0 81.92-81.92 81.92l-655.36 0q-81.92 0-81.92-81.92l0-860.16q0-81.92 81.92-81.92Z"
+                    fill="#29B4FF" p-id="2957"></path>
+                  <path d="M921.6 942.08V768l-256 256h174.08a81.92 81.92 0 0 0 81.92-81.92z" fill="#7BD1FF" p-id="2958">
+                  </path>
+                  <path d="M665.6 849.92v174.08l256-256H747.52a81.92 81.92 0 0 0-81.92 81.92z" fill="#0099EE"
+                    p-id="2959"></path>
+                  <path
+                    d="M256 184.32m40.96 0l133.12 0q40.96 0 40.96 40.96l0 133.12q0 40.96-40.96 40.96l-133.12 0q-40.96 0-40.96-40.96l0-133.12q0-40.96 40.96-40.96Z"
+                    fill="#7BD1FF" p-id="2960"></path>
+                  <path
+                    d="M522.24 184.32m30.72 0l225.28 0q30.72 0 30.72 30.72l0 0q0 30.72-30.72 30.72l-225.28 0q-30.72 0-30.72-30.72l0 0q0-30.72 30.72-30.72Z"
+                    fill="#7BD1FF" p-id="2961"></path>
+                  <path
+                    d="M522.24 327.68m30.72 0l225.28 0q30.72 0 30.72 30.72l0 0q0 30.72-30.72 30.72l-225.28 0q-30.72 0-30.72-30.72l0 0q0-30.72 30.72-30.72Z"
+                    fill="#7BD1FF" p-id="2962"></path>
+                  <path
+                    d="M256 481.28m30.72 0l491.52 0q30.72 0 30.72 30.72l0 0q0 30.72-30.72 30.72l-491.52 0q-30.72 0-30.72-30.72l0 0q0-30.72 30.72-30.72Z"
+                    fill="#7BD1FF" p-id="2963"></path>
+                  <path
+                    d="M245.76 624.64m30.72 0l491.52 0q30.72 0 30.72 30.72l0 0q0 30.72-30.72 30.72l-491.52 0q-30.72 0-30.72-30.72l0 0q0-30.72 30.72-30.72Z"
+                    fill="#7BD1FF" p-id="2964"></path>
+                </svg></div>
+              <div class="file-meta">
+                <p><span class="meta-label">名称:</span> <span class="meta-value" id="preview-name">未选择文件</span></p>
+                <p><span class="meta-label">大小:</span> <span class="meta-value" id="preview-size">0
+                    MB</span></p>
+                <p><span class="meta-label">类型:</span> <span class="meta-value" id="preview-type">未知</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-info-preview" id="file-settings" style="display: none;">
+            <div class="settings-group">
+              <label class="input-label">设置加密密码</label>
+              <input class="input-field" id="file-password" autocomplete="off">
+            </div>
+
+            <div class="settings-group">
+              <label class="input-label">设置过期时间</label>
+              <select class="input-field" id="expiry-time">
+                <option value="86400" selected>24小时</option>
+                <option value="259200">3天</option>
+                <option value="604800">7天</option>
+                <option value="2592000">30天</option>
+              </select>
+            </div>
+
+          </div>
+          <div class="btn-row" id="upload-btns" style="display: none;">
+            <button class="btn" id="confirm-upload">加密上传</button>
+            <button class="btn btn-secondary" id="cancel-upload">取消</button>
+          </div>
+
+          <div class="progress-container" id="upload-progress-container" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="upload-progress-bar"></div>
+            </div>
+            <div class="progress-text" id="upload-text">等待上传...</div>
+          </div>
+
+          <div class="result-area" id="upload-result" style="display: none;">
+            <div class="result-content">
+              <div class="result-left">
+                <div class="qrcode-container" id="qrcode-container">
+                  <p><img class="qr-image" id="qr-image"></p>
+                  <p style="margin-top: 5px; color: var(--text-secondary); font-size: 0.9em">
+                    扫描二维码获取详细信息</p>
+                </div>
+              </div>
+
+              <div class="result-right">
+                <div class="input-group">
+                  <label class="input-label">提取码</label>
+                  <div class="code-display" id="access-code"></div>
+                </div>
+
+                <div class="input-group" style="margin: 0;">
+                  <label class="input-label">下载地址</label>
+                  <div class="page-url" id="page-url"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="btn-row" id="back-to-upload" style="display: none;">
+            <button class="btn">继续上传</button>
+          </div>
+        </div>
+
+        <div class="tab-content" id="download-tab">
+          <div id="code-input-group">
+            <div class="input-group">
+              <label class="input-label">输入文件提取码</label>
+              <input type="text" class="code-input" id="download-code" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="btn-row" id="retrieve-btns">
+            <button class="btn" id="retrieve-btn">提取文件</button>
+          </div>
+          <div class="file-info" id="file-info">
+            <div class="file-details">
+              <div class="file-icon"><svg t="1751443547103" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                  xmlns="http://www.w3.org/2000/svg" p-id="3173" width="60" height="100">
+                  <path
+                    d="M81.92 0m81.92 0l696.32 0q81.92 0 81.92 81.92l0 860.16q0 81.92-81.92 81.92l-696.32 0q-81.92 0-81.92-81.92l0-860.16q0-81.92 81.92-81.92Z"
+                    fill="#FFC53D" p-id="3174"></path>
+                  <path
+                    d="M256.28672 194.56l547.84-5.12a30.72 30.72 0 0 0-0.57344-61.44l-547.84 5.12a30.72 30.72 0 0 0 0.57344 61.44z"
+                    fill="#FFF1B8" p-id="3175"></path>
+                  <path
+                    d="M256.28672 194.56l547.84-5.12a30.72 30.72 0 0 0-0.57344-61.44l-547.84 5.12a30.72 30.72 0 0 0 0.57344 61.44zM258.84672 350.72l547.84-5.12a30.72 30.72 0 0 0-0.57344-61.44l-547.84 5.12a30.72 30.72 0 0 0 0.57344 61.44z"
+                    fill="#FFF1B8" p-id="3176"></path>
+                  <path d="M645.12 624.64m-215.04 0a215.04 215.04 0 1 0 430.08 0 215.04 215.04 0 1 0-430.08 0Z"
+                    fill="#FAAD14" p-id="3177"></path>
+                  <path d="M645.12 624.64m-133.12 0a133.12 133.12 0 1 0 266.24 0 133.12 133.12 0 1 0-266.24 0Z"
+                    fill="#FFF1B8" p-id="3178"></path>
+                  <path d="M532.48 768v204.8l112.64-51.2 112.64 51.2V768z" fill="#FAAD14" p-id="3179"></path>
+                  <path
+                    d="M256 522.24h102.4a30.72 30.72 0 0 0 0-61.44H256a30.72 30.72 0 0 0 0 61.44zM256 686.08h102.4a30.72 30.72 0 0 0 0-61.44H256a30.72 30.72 0 0 0 0 61.44z"
+                    fill="#FFF1B8" p-id="3180"></path>
+                </svg></div>
+              <div class="file-meta">
+                <p><span class="meta-label">名称:</span> <span class="meta-value" id="file-name">document.pdf</span></p>
+                <p><span class="meta-label">大小:</span> <span class="meta-value" id="file-size">4.2
+                    MB</span></p>
+                <p><span class="meta-label">期限:</span> <span class="meta-value" id="file-time">2023-10-15 14:30</span>
+                </p>
+              </div>
+            </div>
+
+          </div>
+          <div id="download-password-group">
+            <div class="input-group">
+              <label class="input-label">输入解密密码</label>
+              <input class="input-field" id="download-password" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="btn-row" id="download-btns">
+            <button class="btn" id="download-btn">下载文件</button>
+            <button class="btn btn-secondary" id="back-to-search">返回</button>
+          </div>
+
+          <div class="progress-container" id="download-progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="download-progress-bar"></div>
+            </div>
+            <div class="progress-text" id="download-text">准备下载...</div>
+          </div>
+
+          <div class="btn-row" id="back-to-download">
+            <button class="btn btn-secondary">继续下载</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <h2>文件密传使用指南</h2>
+        <ol>
+        <li>本服务使用AES算法在本地加密和解密文件，确保文件在传输和存储过程中始终处于加密状态，服务器无法解密您的文件，提供真正的隐私保护。</li>
+        <li>文件传输流程：首先选择要传输的文件并设置密码，上传成功后系统会生成唯一的文件提取码，接收方输入提取码和密码后即可下载并解密文件。<i>扫描二维码可便捷复制文件分享信息。</i></li>
+        <li>出于安全考虑，<strong>您必须提供并妥善保存文件加密密码</strong>。输入错误的密码并不会影响您的文件下载，但会因为解密失败而导致文件无法正常打开。</li>
+        <li>本服务使用大文件分片上传和下载技术，无惧网络波动，能够确保您的大文件可靠传输。</li>
+        <!-- TODO 引导用户下载和安装证书 -->
+        <li><strong>严禁使用本服务传输超出密级范围的文件！</strong></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-alert" id="custom-alert">
+    <div class="alert-content" id="alert-content">
+      <div class="alert-icon" id="alert-icon">ℹ</div>
+      <h2 class="alert-title" id="alert-title">提示</h2>
+      <p class="alert-message" id="alert-message">这是一条提示信息</p>
+      <div class="alert-buttons">
+        <button class="alert-button alert-confirm" id="alert-confirm">确定</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>
