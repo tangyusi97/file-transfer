@@ -7,6 +7,7 @@ const multer = require("multer");
 const config = require("./config");
 
 const app = express();
+app.disable("x-powered-by");
 app.use(express.json());
 app.use(express.static("public"));
 
@@ -110,8 +111,9 @@ app.post("/api/upload", apiKeyAuth, upload.single("file"), (req, res) => {
   const path = req.file.path;
   const expireTime =
     Date.now() + (req.body.expire || config.defaultExpire) * 1000;
+  const ip = req.ip;
 
-  filesDb[hash] = { path, expireTime };
+  filesDb[hash] = { path, expireTime, ip };
   saveFilesDb();
 
   res.json({ success: true, hash, expireTime });
@@ -125,6 +127,7 @@ app.post("/api/refresh", apiKeyAuth, (req, res) => {
   if (filesDb[hash]) {
     const expireTime = Date.now() + (expire || config.defaultExpire) * 1000;
     filesDb[hash].expireTime = expireTime;
+    filesDb[hash].ip = req.ip;
     saveFilesDb();
     res.json({
       success: true,
@@ -159,7 +162,7 @@ app.post("/api/generate-code", apiKeyAuth, (req, res) => {
 
   // 生成唯一提取码
   const code = generateUniqueCode(codesDb);
-  codesDb[code] = { name, size, hashs, expireTime };
+  codesDb[code] = { name, size, hashs, expireTime, ip: req.ip };
   saveCodesDb();
 
   res.json({ code, expireTime });

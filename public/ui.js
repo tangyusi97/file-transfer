@@ -195,7 +195,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 选择文件上传
-  DOM.uploadArea.addEventListener("click", () => DOM.fileInput.click());
+  const clickFileInput = () => DOM.fileInput.click();
+  DOM.uploadArea.addEventListener("click", clickFileInput, { once: true });
+  // 避免对话框弹出响应慢导致重复点击
+  window.addEventListener("focus", () => {
+    DOM.uploadArea.addEventListener("click", clickFileInput, { once: true });
+  });
 
   DOM.fileInput.addEventListener("change", () => {
     if (!DOM.fileInput.files.length) return;
@@ -265,6 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "正在加密并上传文件" + `（${progress.toFixed(1)}%）...`;
         },
       });
+      DOM.uploadProgressBar.style.width = `100%`;
       DOM.uploadText.textContent = "上传成功！";
 
       //请求提取码

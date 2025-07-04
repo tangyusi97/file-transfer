@@ -87,7 +87,7 @@ async function encryptAndUpload({
   let chunkIndex = 0;
   let fileExpireTime;
 
-  onProgress({ totalChunks, finishedChunks: chunkIndex });
+  onProgress({ totalChunks, finishedChunks: 0 });
 
   for (; chunkIndex < totalChunks; chunkIndex++) {
     const start = chunkIndex * chunkSize;
@@ -156,6 +156,7 @@ async function saveFile(fileInfo, password, onProgress) {
     let index = 0;
     const buffers = [];
     const totalChunks = fileInfo.hashs.length;
+    onProgress({ totalChunks, finishedChunks: 0 });
     for (; index < totalChunks; index++) {
       buffers.push(
         await downloadAndDecrypt(
@@ -184,6 +185,7 @@ async function saveFile(fileInfo, password, onProgress) {
     const writable = await fileHandle.createWritable();
     let index = 0;
     const totalChunks = fileInfo.hashs.length;
+    onProgress({ totalChunks, finishedChunks: 0 });
     for (; index < totalChunks; index++) {
       await writable.write(
         await downloadAndDecrypt(
