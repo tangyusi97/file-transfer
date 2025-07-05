@@ -1,10 +1,9 @@
 const DEFAULT_CHUNCK_SIZE = 5 * 1024 * 1024; // 默认分片大小：5MB
 const BIG_FILE_SIZE = 50 * 1024 * 1024; // 大文件将使用流式下载方案：50MB
 
-// 上传文件
-async function uploadFile({ blob, hash, expire, onProgress }) {
-  // 先查询是否已上传
-  const resRefresh = await (
+// 更新文件
+async function refreshFile(hash, expire) {
+  const res = await (
     await fetch("/api/refresh", {
       method: "post",
       body: JSON.stringify({ hash, expire }),
@@ -14,21 +13,18 @@ async function uploadFile({ blob, hash, expire, onProgress }) {
       },
     })
   ).json();
-  if (resRefresh.error) throw new Error(resRefresh.error);
+  if (res.error) throw new Error(res.error);
+  return res;
+}
 
-  // 存在文件直接返回
-  if (resRefresh.success) {
-    onProgress(100);
-    return resRefresh.expireTime;
-  }
-
-  // 正常上传文件
+// 上传文件
+async function uploadFile({ blob, hash, expire, onProgress }) {
   const formData = new FormData();
   formData.append("hash", hash);
   formData.append("expire", expire);
   formData.append("file", blob, hash);
 
-  const resUpload = await (
+  const res = await (
     await xhrFetch(`/api/upload`, {
       method: "post",
       headers: {
@@ -40,9 +36,9 @@ async function uploadFile({ blob, hash, expire, onProgress }) {
       },
     })
   ).json();
-  if (resUpload.error) throw new Error(resUpload.error);
+  if (res.error) throw new Error(res.error);
 
-  return resUpload.expireTime;
+  return res.expireTime;
 }
 
 // 请求提取码
@@ -94,21 +90,32 @@ async function encryptAndUpload({
     const end = Math.min(start + chunkSize, file.size);
     const chunk = file.slice(start, end);
 
-    // 加密分片
-    const { encryptedBlob: blob, hash } = await encryptChunk(chunk, password);
+    let expireTime;
 
-    // 上传
-    const expireTime = await uploadFile({
-      blob,
-      hash,
-      expire,
-      onProgress(percentage) {
-        onProgress({
-          totalChunks,
-          finishedChunks: chunkIndex + percentage / 100,
-        });
-      },
-    });
+    // 检查文件哈希值
+    const hash = await hashChunk(chunk, password);
+    const resRefresh = await refreshFile(hash, expire);
+
+    // 存在文件则不加密上传
+    if (resRefresh.success) {
+      onProgress({ totalChunks, finishedChunks: chunkIndex + 1 });
+      expireTime = resRefresh.expireTime;
+    }
+    // 正常上传文件
+    else {
+      const blob = await encryptChunk(chunk, password);
+      expireTime = await uploadFile({
+        blob,
+        hash,
+        expire,
+        onProgress(percentage) {
+          onProgress({
+            totalChunks,
+            finishedChunks: chunkIndex + percentage / 100,
+          });
+        },
+      });
+    }
 
     hashs.push(hash);
     if (chunkIndex === 0) fileExpireTime = expireTime;
@@ -118,17 +125,30 @@ async function encryptAndUpload({
   return { hashs, fileExpireTime };
 }
 
+// 计算文件哈希值
+async function hashChunk(chunk, password) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const chunkWordArray = CryptoJS.lib.WordArray.create(e.target.result);
+
+      const hash = CryptoJS.SHA256(
+        CryptoJS.enc.Latin1.parse(password).concat(chunkWordArray)
+      ).toString();
+
+      resolve(hash);
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(chunk);
+  });
+}
+
 // 加密文件分片
 async function encryptChunk(chunk, password) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const chunkWordArray = CryptoJS.lib.WordArray.create(e.target.result);
-
-      // 计算文件哈希值
-      const hash = CryptoJS.SHA256(
-        CryptoJS.enc.Latin1.parse(password).concat(chunkWordArray)
-      ).toString();
 
       // 使用AES-CBC模式加密
       const encrypted = CryptoJS.AES.encrypt(chunkWordArray, password);
@@ -142,7 +162,7 @@ async function encryptChunk(chunk, password) {
         { type: "application/octet-stream" }
       );
 
-      resolve({ encryptedBlob, hash });
+      resolve(encryptedBlob);
     };
     reader.onerror = reject;
     reader.readAsArrayBuffer(chunk);
