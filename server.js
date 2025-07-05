@@ -231,8 +231,8 @@ http.createServer(app).listen(httpPort, () => {
 https
   .createServer(
     {
-      pfx: fs.readFileSync("./certfile.pfx"),
-      passphrase: "yusi12345",
+      cert: fs.readFileSync("./public/certfile.crt"),
+      key: fs.readFileSync("./private.key"),
     },
     app
   )
