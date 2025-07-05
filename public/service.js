@@ -149,85 +149,137 @@ async function encryptChunk(chunk, password) {
   });
 }
 
-// 流式保存文件
+// 保存文件
 async function saveFile(fileInfo, password, onProgress) {
-  if (fileInfo.size < BIG_FILE_SIZE) {
-    // 小文件使用全部存入Blob方案
-    let index = 0;
-    const buffers = [];
-    const totalChunks = fileInfo.hashs.length;
-    onProgress({ totalChunks, finishedChunks: 0 });
-    for (; index < totalChunks; index++) {
-      buffers.push(
-        await downloadAndDecrypt(
-          fileInfo.hashs[index],
-          password,
-          ({ percentage }) =>
-            onProgress({
-              totalChunks,
-              finishedChunks: index + percentage / 100,
-            })
-        )
-      );
-    }
-    const url = URL.createObjectURL(new Blob(buffers));
-    clickDownload(url, fileInfo.name);
-    onProgress({
-      totalChunks,
-      finishedChunks: totalChunks,
-    });
+  // if (fileInfo.size < BIG_FILE_SIZE)
+  //   await saveFileByBlob(fileInfo, password, onProgress);
+  // else if ("showSaveFilePicker" in window && detectChrome91Plus())
+  //   await saveFileByFileApi(fileInfo, password, onProgress);
+  // else if ("serviceWorker" in navigator)
+  //   else throw new Error("不支持下载！");
+  await saveFileByServiceWorker(fileInfo, password, onProgress);
+}
 
-    // 大文件使用File System Access API 方案
-  } else if ("showSaveFilePicker" in window && detectChrome91Plus()) {
-    const fileHandle = await window.showSaveFilePicker({
-      suggestedName: fileInfo.name,
-    });
-    const writable = await fileHandle.createWritable();
-    let index = 0;
-    const totalChunks = fileInfo.hashs.length;
-    onProgress({ totalChunks, finishedChunks: 0 });
-    for (; index < totalChunks; index++) {
-      await writable.write(
-        await downloadAndDecrypt(
-          fileInfo.hashs[index],
-          password,
-          ({ percentage }) =>
-            onProgress({
-              totalChunks,
-              finishedChunks: index + percentage / 100,
-            })
-        )
-      );
-    }
-    await writable.close();
-    onProgress({
-      totalChunks,
-      finishedChunks: totalChunks,
-    });
+// 使用全部存入Blob方案下载文件
+async function saveFileByBlob(fileInfo, password, onProgress) {
+  let index = 0;
+  const buffers = [];
+  const totalChunks = fileInfo.hashs.length;
+  onProgress({ totalChunks, finishedChunks: 0 });
+  for (; index < totalChunks; index++) {
+    buffers.push(
+      await downloadAndDecrypt(
+        fileInfo.hashs[index],
+        password,
+        ({ percentage }) =>
+          onProgress({
+            totalChunks,
+            finishedChunks: index + percentage / 100,
+          })
+      )
+    );
+  }
+  const url = URL.createObjectURL(new Blob(buffers));
+  clickDownload(url, fileInfo.name);
+  onProgress({
+    totalChunks,
+    finishedChunks: totalChunks,
+  });
+}
 
-    // Service Worker方案
-  } else if ("serviceWorker" in navigator) {
-    await registServiceWorker("./download.worker.js");
-    // 通知ServiceWorker要下载的文件
+// 使用File System Access API 方案下载文件
+async function saveFileByFileApi(fileInfo, password, onProgress) {
+  const fileHandle = await window.showSaveFilePicker({
+    suggestedName: fileInfo.name,
+  });
+  const writable = await fileHandle.createWritable();
+  let index = 0;
+  const totalChunks = fileInfo.hashs.length;
+  onProgress({ totalChunks, finishedChunks: 0 });
+  for (; index < totalChunks; index++) {
+    await writable.write(
+      await downloadAndDecrypt(
+        fileInfo.hashs[index],
+        password,
+        ({ percentage }) =>
+          onProgress({
+            totalChunks,
+            finishedChunks: index + percentage / 100,
+          })
+      )
+    );
+  }
+  await writable.close();
+  onProgress({
+    totalChunks,
+    finishedChunks: totalChunks,
+  });
+}
+
+// 使用Service Worker下载文件
+async function saveFileByServiceWorker(fileInfo, password, onProgress) {
+  await registServiceWorker("./download.worker.js");
+
+  let index = 0;
+  const totalChunks = fileInfo.hashs.length;
+  onProgress({ totalChunks, finishedChunks: 0 });
+
+  // 通知ServiceWorker要下载的文件
+  const id = Date.now();
+  navigator.serviceWorker.controller.postMessage({
+    type: "DOWNLOAD",
+    id,
+    name: fileInfo.name,
+    size: fileInfo.size,
+  });
+
+  // 将下载的文件发送给ServiceWorker
+  const pushFile = async () => {
     navigator.serviceWorker.controller.postMessage({
       type: "FILE",
-      fileInfo,
-      password,
+      id,
+      buffer: await downloadAndDecrypt(
+        fileInfo.hashs[index],
+        password,
+        ({ percentage }) =>
+          onProgress({
+            totalChunks,
+            finishedChunks: index + percentage / 100,
+          })
+      ),
     });
-    // ServiceWorker准备就绪
-    navigator.serviceWorker.addEventListener("message", () => clickDownload(), {
-      once: true,
-    });
-    onProgress({ totalChunks: 0 });
-  } else {
-    throw new Error("不支持下载！");
-  }
+    index++;
+  };
+
+  return new Promise((resolve, reject) => {
+    // ServiceWorker反馈数据接收情况
+    const handleMessage = (event) => {
+      const type = event.data.type;
+      if (type === "READY") {
+        clickDownload("/savefile/" + id);
+        pushFile();
+      } else if (type === "PULL") {
+        if (index < totalChunks) pushFile();
+        else {
+          navigator.serviceWorker.controller.postMessage({ type: "DONE", id });
+          navigator.serviceWorker.removeEventListener("message", handleMessage);
+          onProgress({ totalChunks, finishedChunks: totalChunks });
+          resolve();
+        }
+      } else if (type === "CANCEL") {
+        navigator.serviceWorker.removeEventListener("message", handleMessage);
+        onProgress({ totalChunks: 0 });
+        reject("已取消下载！");
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+  });
 }
 
 // 点击下载
 function clickDownload(href, download) {
   const a = document.createElement("a");
-  a.href = href || "/saveFile";
+  a.href = href;
   if (download) a.download = download;
   // a.target = "_blank";
   a.click();
@@ -373,36 +425,55 @@ async function downloadWithProgress(url, onProgress) {
     offset += chunk.length;
   }
   return {
-    ok: response.ok,
+    ok: response.status < 400,
     arraybuffer: async () => data.buffer,
     json: async () => JSON.parse(new TextDecoder().decode(data)),
   };
 }
 
 // 注册ServiceWorker
-async function registServiceWorker(workerJs) {
-  if (!navigator.serviceWorker) return false;
-
-  const registration = await navigator.serviceWorker.register(workerJs);
-
-  // 如果已经有活跃的Service Worker
-  if (registration.active && registration.active.state === "activated") {
-    return true;
+async function registServiceWorker(scriptURL) {
+  if (!("serviceWorker" in navigator)) {
+    throw new Error("Service workers are not supported in this browser.");
   }
 
-  // 否则等待激活
+  // 检查是否已存在Service Worker
+  let registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) {
+    // 注册新的 Service Worker
+    console.log("no worker");
+    registration = await navigator.serviceWorker.register(scriptURL);
+  }
+
+  // 如果已激活则直接返回
+  if (registration.active) {
+    return registration;
+  }
+
+  // 等待新 Service Worker 激活
   return new Promise((resolve) => {
-    navigator.serviceWorker.addEventListener("controllerchange", resolve, {
-      once: true,
-    });
-    registration.addEventListener("updatefound", () => {
-      const sw = registration.installing;
-      sw.addEventListener("statechange", () => {
-        if (sw.state === "activated") {
-          resolve();
-        }
+    // 处理正在安装或等待的 worker
+    const handleActivation = (worker) => {
+      if (worker.state === "activated") {
+        resolve(registration);
+      } else {
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "activated") {
+            resolve(registration);
+          }
+        });
+      }
+    };
+
+    if (registration.installing) {
+      handleActivation(registration.installing);
+    } else if (registration.waiting) {
+      handleActivation(registration.waiting);
+    } else {
+      registration.addEventListener("updatefound", () => {
+        handleActivation(registration.installing);
       });
-    });
+    }
   });
 }
 
