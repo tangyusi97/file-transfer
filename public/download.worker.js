@@ -1,6 +1,3 @@
-importScripts(["./crypto-js.min.js"]);
-importScripts(["./service.js"]);
-
 self.addEventListener("activate", (event) => {
   event.waitUntil(clients.claim());
 });

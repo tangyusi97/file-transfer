@@ -171,13 +171,13 @@ async function encryptChunk(chunk, password) {
 
 // 保存文件
 async function saveFile(fileInfo, password, onProgress) {
-  // if (fileInfo.size < BIG_FILE_SIZE)
-  //   await saveFileByBlob(fileInfo, password, onProgress);
-  // else if ("showSaveFilePicker" in window && detectChrome91Plus())
-  //   await saveFileByFileApi(fileInfo, password, onProgress);
-  // else if ("serviceWorker" in navigator)
-  //   else throw new Error("不支持下载！");
-  await saveFileByServiceWorker(fileInfo, password, onProgress);
+  if (fileInfo.size < BIG_FILE_SIZE)
+    await saveFileByBlob(fileInfo, password, onProgress);
+  else if ("showSaveFilePicker" in window && detectChrome91Plus())
+    await saveFileByFileApi(fileInfo, password, onProgress);
+  else if ("serviceWorker" in navigator)
+    await saveFileByServiceWorker(fileInfo, password, onProgress);
+  else throw new Error("不支持下载！");
 }
 
 // 使用全部存入Blob方案下载文件
@@ -461,7 +461,6 @@ async function registServiceWorker(scriptURL) {
   let registration = await navigator.serviceWorker.getRegistration();
   if (!registration) {
     // 注册新的 Service Worker
-    console.log("no worker");
     registration = await navigator.serviceWorker.register(scriptURL);
   }
 
