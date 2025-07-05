@@ -359,6 +359,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // 下载中
     setDownloadState(DownloadState.DOWNLOADING);
 
+    let isBackground = false;
     try {
       await saveFile(
         retrievedFileInfo,
@@ -369,6 +370,8 @@ document.addEventListener("DOMContentLoaded", function () {
             DOM.downloadProgressBar.style.width = `${progress}%`;
             DOM.downloadText.textContent =
               "正在下载并解密文件" + `（${progress.toFixed(1)}%）...`;
+          } else {
+            isBackground = true;
           }
         }
       );
@@ -381,7 +384,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 下载完成
     DOM.downloadProgressBar.style.width = `100%`;
-    DOM.downloadText.textContent = "文件下载并解密完成！";
+    DOM.downloadText.textContent = isBackground
+      ? "文件已在后台下载并解密！"
+      : "文件下载并解密完成！";
     setDownloadState(DownloadState.DOWNLOADED);
   });
 

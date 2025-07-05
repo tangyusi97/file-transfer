@@ -239,61 +239,22 @@ async function saveFileByFileApi(fileInfo, password, onProgress) {
 // 使用Service Worker下载文件
 async function saveFileByServiceWorker(fileInfo, password, onProgress) {
   await registServiceWorker("./download.worker.js");
-
-  let index = 0;
-  const totalChunks = fileInfo.hashs.length;
-  onProgress({ totalChunks, finishedChunks: 0 });
-
   // 通知ServiceWorker要下载的文件
-  const id = Date.now();
   navigator.serviceWorker.controller.postMessage({
-    type: "DOWNLOAD",
-    id,
-    name: fileInfo.name,
-    size: fileInfo.size,
+    type: "FILE",
+    fileInfo,
+    password,
   });
-
-  // 将下载的文件发送给ServiceWorker
-  const pushFile = async () => {
-    navigator.serviceWorker.controller.postMessage({
-      type: "FILE",
-      id,
-      buffer: await downloadAndDecrypt(
-        fileInfo.hashs[index],
-        password,
-        ({ percentage }) =>
-          onProgress({
-            totalChunks,
-            finishedChunks: index + percentage / 100,
-          })
-      ),
-    });
-    index++;
-  };
-
-  return new Promise((resolve, reject) => {
-    // ServiceWorker反馈数据接收情况
-    const handleMessage = (event) => {
-      const type = event.data.type;
-      if (type === "READY") {
-        clickDownload("/savefile/" + id);
-        pushFile();
-      } else if (type === "PULL") {
-        if (index < totalChunks) pushFile();
-        else {
-          navigator.serviceWorker.controller.postMessage({ type: "DONE", id });
-          navigator.serviceWorker.removeEventListener("message", handleMessage);
-          onProgress({ totalChunks, finishedChunks: totalChunks });
-          resolve();
-        }
-      } else if (type === "CANCEL") {
-        navigator.serviceWorker.removeEventListener("message", handleMessage);
-        onProgress({ totalChunks: 0 });
-        reject("已取消下载！");
-      }
-    };
-    navigator.serviceWorker.addEventListener("message", handleMessage);
-  });
+  // ServiceWorker准备就绪
+  navigator.serviceWorker.addEventListener(
+    "message",
+    () => clickDownload("/savefile"),
+    {
+      once: true,
+    }
+  );
+  // 标记为后台下载
+  onProgress({ totalChunks: 0 });
 }
 
 // 点击下载
