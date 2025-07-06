@@ -16,6 +16,47 @@
 </head>
 
 <body>
+  <!-- 浏览器兼容性检查 -->
+  <script type="text/javascript">
+    !(function () {
+
+      function checkAsync() { try { new Function("async () => {}")(); return true;} catch(e) { return false; }}
+      function checkReadableStream() { try { new ReadableStream(); return true;} catch(e) { return false; }}
+
+      var body = document.getElementsByTagName("body")[0];
+      var banner = document.createElement("div");
+      banner.id = 'browser-compatible-banner';
+      banner.style.position = "fixed";
+      banner.style.top = 0;
+      banner.style.left = 0;
+      banner.style.width = "100%";
+      banner.style.zIndex = 9999;
+      banner.style.color = "#fff";
+      banner.style.padding = "16px 24px";
+      banner.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+
+      // 不兼容async语法，无法使用
+      if (!checkAsync()) {
+        banner.style.backgroundColor = "#ff4d4f";
+        banner.innerHTML =
+          "<strong>警告：</strong>您正在使用不兼容的浏览器，本页面无法正常使用！建议您更换Chrome 56 以上版本的浏览器访问以获得最佳体验。"
+        body.appendChild(banner);
+      }
+
+      // 不兼容ReadableStream，功能受限
+      else if (!checkReadableStream()) {
+        // http本来就用不了，不用提示
+        if (location.protocol === 'http:') return;
+        banner.style.backgroundColor = "#faad14";
+        banner.innerHTML =
+          "<strong>警告：</strong>您正在使用过时的浏览器，这将导致本页面功能受限（无法使用后台下载功能）。建议您更换Chrome 56 以上版本的浏览器访问以获得最佳体验。" +
+          "<span style='float:right;color:#000;cursor:pointer' onClick='javascript:document.getElementById(\"browser-compatible-banner\").style.display=\"none\";'>&times;</span>";
+        body.appendChild(banner);
+      }
+    
+    })();
+  </script>
+
   <div class="container">
     <div class="main-content">
       <div class="left-panel">
