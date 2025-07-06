@@ -65,8 +65,10 @@ async function retrieveCode(code) {
 
 // 下载文件
 async function downloadFile(hash, onProgress) {
-  const res = await downloadWithProgress("/api/download/" + hash, onProgress);
-  if (res.ok) return await res.arraybuffer();
+  const res = onProgress
+    ? await xhrFetch("/api/download/" + hash, { onProgress })
+    : await fetch("/api/download/" + hash);
+  if (res.status < 400) return await res.arraybuffer();
   else throw new Error((await res.json()).error);
 }
 
@@ -173,9 +175,9 @@ async function encryptChunk(chunk, password) {
 async function saveFile(fileInfo, password, onProgress) {
   if (fileInfo.size < BIG_FILE_SIZE)
     await saveFileByBlob(fileInfo, password, onProgress);
-  else if ("showSaveFilePicker" in window && detectChrome91Plus())
+  else if (window.showSaveFilePicker && detectChrome91Plus())
     await saveFileByFileApi(fileInfo, password, onProgress);
-  else if ("serviceWorker" in navigator)
+  else if (navigator.serviceWorker)
     await saveFileByServiceWorker(fileInfo, password, onProgress);
   else throw new Error("不支持下载！");
 }
@@ -198,13 +200,10 @@ async function saveFileByBlob(fileInfo, password, onProgress) {
           })
       )
     );
+    onProgress({ totalChunks, finishedChunks: index + 1 });
   }
   const url = URL.createObjectURL(new Blob(buffers));
   clickDownload(url, fileInfo.name);
-  onProgress({
-    totalChunks,
-    finishedChunks: totalChunks,
-  });
 }
 
 // 使用File System Access API 方案下载文件
@@ -228,12 +227,9 @@ async function saveFileByFileApi(fileInfo, password, onProgress) {
           })
       )
     );
+    onProgress({ totalChunks, finishedChunks: index + 1 });
   }
   await writable.close();
-  onProgress({
-    totalChunks,
-    finishedChunks: totalChunks,
-  });
 }
 
 // 使用Service Worker下载文件
@@ -307,7 +303,7 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
-// 用xhr实现的fetch，支持获取上传进度
+// 用xhr实现的fetch，支持获取请求进度
 function xhrFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
     // 创建XHR对象
@@ -321,9 +317,9 @@ function xhrFetch(url, options = {}) {
       });
     }
 
-    // 处理上传进度
+    // 处理请求进度
     if (options.onProgress) {
-      xhr.upload.addEventListener("progress", (event) => {
+      xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           options.onProgress({
             loaded: event.loaded,
@@ -331,7 +327,16 @@ function xhrFetch(url, options = {}) {
             percentage: Math.round((event.loaded / event.total) * 100),
           });
         }
-      });
+      };
+      xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+          options.onProgress({
+            loaded: event.loaded,
+            total: event.total,
+            percentage: Math.round((event.loaded / event.total) * 100),
+          });
+        }
+      };
     }
 
     // 处理响应
@@ -342,6 +347,7 @@ function xhrFetch(url, options = {}) {
         statusText: xhr.statusText,
         json: () => Promise.resolve(JSON.parse(xhr.responseText)),
         text: () => Promise.resolve(xhr.responseText),
+        arraybuffer: () => Promise.resolve(xhr.response),
       });
     };
 
@@ -360,47 +366,9 @@ function xhrFetch(url, options = {}) {
   });
 }
 
-// 监听下载进度的下载函数
-async function downloadWithProgress(url, onProgress) {
-  const response = await fetch(url);
-  const reader = response.body.getReader();
-  const contentLength = +response.headers.get("Content-Length");
-
-  let received = 0;
-  let chunks = [];
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    chunks.push(value);
-    received += value.length;
-
-    onProgress &&
-      onProgress({
-        loaded: received,
-        total: contentLength,
-        percentage: contentLength ? (received / contentLength) * 100 : 100,
-      });
-  }
-
-  // 合并数据
-  const data = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    data.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return {
-    ok: response.status < 400,
-    arraybuffer: async () => data.buffer,
-    json: async () => JSON.parse(new TextDecoder().decode(data)),
-  };
-}
-
 // 注册ServiceWorker
 async function registServiceWorker(scriptURL) {
-  if (!("serviceWorker" in navigator)) {
+  if (!navigator.serviceWorker) {
     throw new Error("Service workers are not supported in this browser.");
   }
 
