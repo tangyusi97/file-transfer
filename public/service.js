@@ -68,7 +68,7 @@ async function downloadFile(hash, onProgress) {
   const res = onProgress
     ? await xhrFetch("/api/download/" + hash, { onProgress })
     : await fetch("/api/download/" + hash);
-  if (res.status < 400) return await res.arraybuffer();
+  if (res.status < 400) return await res.arrayBuffer();
   else throw new Error((await res.json()).error);
 }
 
@@ -310,6 +310,9 @@ function xhrFetch(url, options = {}) {
     const xhr = new XMLHttpRequest();
     xhr.open(options.method || "GET", url);
 
+    // 设置响应类型为 arraybuffer (用于二进制数据)
+    xhr.responseType = "arraybuffer";
+
     // 设置请求头
     if (options.headers) {
       Object.entries(options.headers).forEach(([key, value]) => {
@@ -345,9 +348,10 @@ function xhrFetch(url, options = {}) {
         ok: xhr.status >= 200 && xhr.status < 300,
         status: xhr.status,
         statusText: xhr.statusText,
-        json: () => Promise.resolve(JSON.parse(xhr.responseText)),
-        text: () => Promise.resolve(xhr.responseText),
-        arraybuffer: () => Promise.resolve(xhr.response),
+        json: () =>
+          Promise.resolve(JSON.parse(new TextDecoder().decode(xhr.response))),
+        text: () => Promise.resolve(new TextDecoder().decode(xhr.response)),
+        arrayBuffer: () => Promise.resolve(xhr.response),
       });
     };
 
