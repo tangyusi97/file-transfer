@@ -57,6 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
     alertConfirm: document.getElementById("alert-confirm"),
   };
 
+  // 二维码
+  const qrcode = new QRCode(DOM.qrcodeImage, {
+    correctLevel: QRCode.CorrectLevel.L,
+  });
+
   let selectedFile = null;
   let retrievedFileInfo = null;
 
@@ -76,24 +81,12 @@ document.addEventListener("DOMContentLoaded", function () {
     DOWNLOADED: 3,
   };
 
-  // 标签页切换功能
-  DOM.tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      DOM.tabs.forEach((t) => t.classList.remove("active"));
-      DOM.tabContents.forEach((c) => c.classList.remove("active"));
+  // 初始化页面URL
+  DOM.pageUrl.textContent = window.location.href;
 
-      tab.classList.add("active");
-      const tabId = tab.getAttribute("data-tab");
-      document.getElementById(`${tabId}-tab`).classList.add("active");
-
-      // 重置状态
-      if (tabId === "upload") {
-        setUploadState(UploadState.INITIAL);
-      } else {
-        setDownloadState(DownloadState.INITIAL);
-      }
-    });
-  });
+  // 初始状态设置
+  setUploadState(UploadState.INITIAL);
+  setDownloadState(DownloadState.INITIAL);
 
   // 设置上传状态函数
   function setUploadState(state) {
@@ -165,6 +158,25 @@ document.addEventListener("DOMContentLoaded", function () {
         break;
     }
   }
+
+  // 标签页切换功能
+  DOM.tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      DOM.tabs.forEach((t) => t.classList.remove("active"));
+      DOM.tabContents.forEach((c) => c.classList.remove("active"));
+
+      tab.classList.add("active");
+      const tabId = tab.getAttribute("data-tab");
+      document.getElementById(`${tabId}-tab`).classList.add("active");
+
+      // 重置状态
+      if (tabId === "upload") {
+        setUploadState(UploadState.INITIAL);
+      } else {
+        setDownloadState(DownloadState.INITIAL);
+      }
+    });
+  });
 
   // 自定义弹窗函数
   function showAlert(title, message, type = "info") {
@@ -284,10 +296,9 @@ document.addEventListener("DOMContentLoaded", function () {
       DOM.accessCode.textContent = code;
 
       // 生成二维码
-      generateAwesomeQR(
-        `下载地址：${window.location.href}，提取码：${code}，解密密码：` +
-          `${password}，过期时间：${new Date(fileExpireTime).toLocaleString()}`,
-        DOM.qrcodeImage
+      qrcode.makeCode(
+        `下载地址：${window.location.href} 提取码：${code}，解密密码：` +
+          `${password}，过期时间：${new Date(fileExpireTime).toLocaleString()}`
       );
 
       // 显示结果
@@ -394,11 +405,4 @@ document.addEventListener("DOMContentLoaded", function () {
   DOM.backToDownload.addEventListener("click", function () {
     setDownloadState(DownloadState.INITIAL);
   });
-
-  // 初始化页面URL
-  DOM.pageUrl.textContent = window.location.href;
-
-  // 初始状态设置
-  setUploadState(UploadState.INITIAL);
-  setDownloadState(DownloadState.INITIAL);
 });

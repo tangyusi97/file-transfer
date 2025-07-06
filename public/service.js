@@ -298,20 +298,6 @@ function wordArrayToArrayBuffer(wordArray) {
   return buffer.slice(0, wordArray.sigBytes);
 }
 
-// 使用AwesomeQR生成二维码
-function generateAwesomeQR(text, imgDOM) {
-  new AwesomeQR.AwesomeQR({
-    text: text,
-    size: 500,
-    margin: 0,
-    autoColor: true,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-  })
-    .draw()
-    .then((dataURL) => (imgDOM.src = dataURL));
-}
-
 // 格式化文件大小
 function formatFileSize(bytes) {
   if (bytes === 0) return "0 Bytes";

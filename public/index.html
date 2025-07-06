@@ -9,7 +9,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
   <title>文件密传 | 端到端加密文件中转站</title>
   <link rel="stylesheet" href="./style.css">
-  <script src="./awesome-qr.min.js" async></script>
+  <script src="./qrcode.min.js" async></script>
   <script src="./crypto-js.min.js" async></script>
   <script src="./service.js" async></script>
   <script src="./ui.js" defer></script>
@@ -110,9 +110,8 @@
             <div class="result-content">
               <div class="result-left">
                 <div class="qrcode-container" id="qrcode-container">
-                  <p><img class="qr-image" id="qr-image"></p>
-                  <p style="margin-top: 5px; color: var(--text-secondary); font-size: 0.9em">
-                    扫描二维码获取详细信息</p>
+                  <p class="qr-image" id="qr-image"></p>
+                  <p>扫描二维码获取详细信息</p>
                 </div>
               </div>
 
