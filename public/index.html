@@ -20,8 +20,8 @@
     <div class="main-content">
       <div class="left-panel">
         <div class="tabs-container">
-          <button class="tab active" data-tab="upload">上传文件</button>
-          <button class="tab" data-tab="download">下载文件</button>
+          <div class="tab active" data-tab="upload">上传文件</div>
+          <div class="tab" data-tab="download">下载文件</div>
         </div>
 
         <div class="tab-content active" id="upload-tab">
@@ -77,7 +77,7 @@
             </div>
           </div>
 
-          <div class="file-info-preview" id="file-settings" style="display: none;">
+          <div class="file-settings" id="file-settings" style="display: none;">
             <div class="settings-group">
               <label class="input-label">设置加密密码</label>
               <input class="input-field" id="file-password" autocomplete="off">
@@ -146,7 +146,8 @@
           <div class="btn-row" id="retrieve-btns">
             <button class="btn" id="retrieve-btn">提取文件</button>
           </div>
-          <div class="file-info" id="file-info">
+
+          <div class="file-info" id="file-info" style="display: none;">
             <div class="file-details">
               <div class="file-icon"><svg t="1751443547103" class="icon" viewBox="0 0 1024 1024" version="1.1"
                   xmlns="http://www.w3.org/2000/svg" p-id="3173" width="60" height="100">
@@ -176,28 +177,28 @@
                 </p>
               </div>
             </div>
-
           </div>
-          <div id="download-password-group">
+
+          <div id="download-password-group" style="display: none;">
             <div class="input-group">
               <label class="input-label">输入解密密码</label>
               <input class="input-field" id="download-password" autocomplete="off">
             </div>
           </div>
 
-          <div class="btn-row" id="download-btns">
+          <div class="btn-row" id="download-btns" style="display: none;">
             <button class="btn" id="download-btn">下载文件</button>
             <button class="btn btn-secondary" id="back-to-search">返回</button>
           </div>
 
-          <div class="progress-container" id="download-progress-container">
+          <div class="progress-container" id="download-progress-container" style="display: none;">
             <div class="progress-bar">
               <div class="progress-fill" id="download-progress-bar"></div>
             </div>
             <div class="progress-text" id="download-text">准备下载...</div>
           </div>
 
-          <div class="btn-row" id="back-to-download">
+          <div class="btn-row" id="back-to-download" style="display: none;">
             <button class="btn btn-secondary">继续下载</button>
           </div>
 
@@ -207,12 +208,12 @@
       <div class="right-panel">
         <h2>文件密传使用指南</h2>
         <ol>
-        <li>本服务使用AES算法在本地加密和解密文件，确保文件在传输和存储过程中始终处于加密状态，服务器无法解密您的文件，提供真正的隐私保护。</li>
-        <li>文件传输流程：首先选择要传输的文件并设置密码，上传成功后系统会生成唯一的文件提取码，接收方输入提取码和密码后即可下载并解密文件。<i>扫描二维码可便捷复制文件分享信息。</i></li>
-        <li>出于安全考虑，<strong>您必须提供并妥善保管加密密码</strong>。输入错误的密码并不会影响您的文件下载，但会因为解密失败而导致文件无法正常打开。</li>
-        <li>本服务使用大文件分片上传和下载技术，无惧网络波动，能够确保您的大文件可靠传输。</li>
-        <!-- TODO 引导用户下载和安装证书 -->
-        <li><strong>严禁使用本服务传输超出密级范围的文件！</strong></li>
+          <li>本服务使用AES算法在本地加密和解密文件，确保文件在传输和存储过程中始终处于加密状态，服务器无法解密您的文件，提供真正的隐私保护。</li>
+          <li>文件传输流程：首先选择要传输的文件并设置密码，上传成功后系统会生成唯一的文件提取码，接收方输入提取码和密码后即可下载并解密文件。<i>扫描二维码可便捷复制文件分享信息。</i></li>
+          <li>出于安全考虑，<strong>您必须提供并妥善保管加密密码</strong>。输入错误的密码并不会影响您的文件下载，但会因为解密失败而导致文件无法正常打开。</li>
+          <li>本服务使用大文件分片上传和下载技术，无惧网络波动，能够确保您的大文件可靠传输。</li>
+          <!-- TODO 引导用户下载和安装证书 -->
+          <li><strong>严禁使用本服务传输超出密级范围的文件！</strong></li>
         </ol>
       </div>
     </div>
@@ -223,7 +224,7 @@
       <div class="alert-icon" id="alert-icon">ℹ</div>
       <h2 class="alert-title" id="alert-title">提示</h2>
       <p class="alert-message" id="alert-message">这是一条提示信息</p>
-      <div class="alert-buttons">
+      <div class="btn-row">
         <button class="alert-button alert-confirm" id="alert-confirm">确定</button>
       </div>
     </div>
