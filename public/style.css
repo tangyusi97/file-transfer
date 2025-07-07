@@ -33,7 +33,6 @@ body {
   padding: 20px;
   background-attachment: fixed;
   overflow-x: hidden;
-  line-height: 1.5715;
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
@@ -47,9 +46,12 @@ body {
 
 .main-content {
   display: flex;
-  gap: 24px;
   flex-wrap: wrap;
   min-height: 640px;
+}
+
+.main-content > * + * {
+  margin-left: 24px;
 }
 
 .left-panel {
@@ -114,7 +116,11 @@ body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 20px;
+  margin-top: -20px;
+}
+
+.tab-content.active > * {
+  margin-top: 20px;
 }
 
 .upload-area {
@@ -168,8 +174,11 @@ body {
 
 .file-details {
   display: flex;
-  gap: 15px;
   align-items: center;
+}
+
+.file-details > * + * {
+  margin-left: 15px;
 }
 
 .file-icon {
@@ -212,7 +221,6 @@ body {
 
 .file-settings {
   display: flex;
-  gap: 20px;
   background: var(--background-light);
   border-radius: 8px;
   padding: 20px;
@@ -220,8 +228,13 @@ body {
   border: 1px solid var(--border-light);
 }
 
+.file-settings > * + * {
+  margin-left: 20px;
+}
+
 .settings-group {
-  margin: 20px 0;
+  margin-top: 20px;
+  margin-bottom: 20px;
   flex: 1;
 }
 
@@ -298,8 +311,11 @@ select.input-field {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 24px;
   text-align: left;
+}
+
+.result-content > * + * {
+  margin-left: 24px;
 }
 
 .result-left {
@@ -352,6 +368,8 @@ select.input-field {
 
 .qr-image {
   width: 170px;
+  height: 170px;
+  overflow: hidden;
 }
 
 .qr-image canvas,
@@ -380,7 +398,10 @@ select.input-field {
 
 .btn-row {
   display: flex;
-  gap: 14px;
+}
+
+.btn-row > * + * {
+  margin-left: 14px;
 }
 
 .btn {
@@ -602,6 +623,10 @@ select.input-field {
   line-height: 1.6;
 }
 
+.alert-message code {
+  font-size: 0.9em;
+}
+
 .alert-button {
   flex: 1;
   padding: 8px 16px;
@@ -642,6 +667,11 @@ select.input-field {
     flex-direction: column;
   }
 
+  .main-content > * + * {
+    margin-top: 20px;
+    margin-left: 0;
+  }
+
   .left-panel,
   .right-panel {
     width: 100%;
@@ -653,6 +683,11 @@ select.input-field {
 
   .result-content {
     flex-direction: column;
+  }
+
+  .result-content > * + * {
+    margin-top: 20px;
+    margin-left: 0;
   }
 
   .tabs-container {
