@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     downloadText: document.getElementById("download-text"),
     downloadBtns: document.getElementById("download-btns"),
     downloadBtn: document.getElementById("download-btn"),
+    bigFileWarn: document.getElementById("big-file-warn"),
     backToSearch: document.getElementById("back-to-search"),
     codeInputGroup: document.getElementById("code-input-group"),
     backToDownload: document.getElementById("back-to-download"),
@@ -51,10 +52,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 自定义弹窗相关元素
     customAlert: document.getElementById("custom-alert"),
+    alertContent: document.getElementById("alert-content"),
     alertIcon: document.getElementById("alert-icon"),
     alertTitle: document.getElementById("alert-title"),
     alertMessage: document.getElementById("alert-message"),
     alertConfirm: document.getElementById("alert-confirm"),
+    alertCancel: document.getElementById("alert-cancel"),
   };
 
   // 二维码
@@ -64,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let selectedFile = null;
   let retrievedFileInfo = null;
+  let isProcessing = false; // 标记正在上传/下载，禁用tab防止页面消失
 
   // 上传状态枚举
   const UploadState = {
@@ -133,6 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
     DOM.downloadPasswordGroup.style.display = "none";
     DOM.downloadProgressContainer.style.display = "none";
     DOM.backToDownload.style.display = "none";
+    DOM.bigFileWarn.style.display = "none";
 
     // 根据状态显示相应元素
     switch (state) {
@@ -146,6 +151,17 @@ document.addEventListener("DOMContentLoaded", function () {
         DOM.fileInfo.style.display = "";
         DOM.downloadPasswordGroup.style.display = "";
         DOM.downloadBtns.style.display = "";
+        // 大文件警告
+        if (retrievedFileInfo.size > BIG_FILE_SIZE) {
+          // http协议只能使用Blob下载方案，提示用户风险
+          if (location.protocol === "http:") {
+            DOM.bigFileWarn.innerHTML = `<strong>注意：</strong>大文件直接下载解密可能会因为内存不足而导致页面崩溃。推荐您<a href="https://${location.hostname}:88">访问本服务的https版本</a>，支持超大文件的后台下载解密。`;
+            DOM.bigFileWarn.style.display = "";
+            DOM.downloadBtn.classList.add("btn-error");
+          }
+        } else {
+          DOM.downloadBtn.classList.remove("btn-error");
+        }
         break;
       case DownloadState.DOWNLOADING:
         DOM.fileInfo.style.display = "";
@@ -168,25 +184,26 @@ document.addEventListener("DOMContentLoaded", function () {
       tab.classList.add("active");
       const tabId = tab.getAttribute("data-tab");
       document.getElementById(`${tabId}-tab`).classList.add("active");
-
-      // 重置状态
-      if (tabId === "upload") {
-        setUploadState(UploadState.INITIAL);
-      } else {
-        setDownloadState(DownloadState.INITIAL);
-      }
     });
   });
 
   // 自定义弹窗函数
-  function showAlert(title, message, type = "info") {
-    DOM.alertTitle.textContent = title;
-    DOM.alertMessage.textContent = message;
-    DOM.alertIcon.textContent =
-      type === "error" ? "✖" : type === "success" ? "✓" : "ℹ";
-    document.getElementById(
-      "alert-content"
-    ).className = `alert-content alert-${type}`;
+  function showAlert(
+    title,
+    message,
+    type = "info",
+    confirmBtn = { type: "primary", text: "确定" }
+  ) {
+    DOM.alertTitle.innerHTML = title;
+    DOM.alertMessage.innerHTML = message;
+    DOM.alertIcon.innerHTML =
+      type === "error" ? "✖" : type === "success" ? "✓" : "i";
+    DOM.alertContent.className = `alert-content alert-${type}`;
+    DOM.alertConfirm.textContent = confirmBtn.text;
+    confirmBtn.type === "error"
+      ? DOM.alertConfirm.classList.add("btn-error")
+      : DOM.alertConfirm.classList.remove("btn-error");
+    // 显示弹窗
     DOM.customAlert.classList.add("active");
 
     return new Promise((resolve) => {
@@ -197,7 +214,11 @@ document.addEventListener("DOMContentLoaded", function () {
       };
 
       DOM.alertConfirm.addEventListener("click", confirmHandler);
-      DOM.customAlert.addEventListener("click", function (e) {
+      DOM.alertCancel.addEventListener("click", () => {
+        DOM.customAlert.classList.remove("active");
+        resolve(false);
+      });
+      DOM.customAlert.addEventListener("click", (e) => {
         if (e.target === DOM.customAlert) {
           DOM.customAlert.classList.remove("active");
           resolve(false);
@@ -207,12 +228,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 选择文件上传
-  const clickFileInput = () => DOM.fileInput.click();
-  DOM.uploadArea.addEventListener("click", clickFileInput, { once: true });
-  // 避免对话框弹出响应慢导致重复点击
-  window.addEventListener("focus", () => {
-    DOM.uploadArea.addEventListener("click", clickFileInput, { once: true });
-  });
+  DOM.uploadArea.addEventListener("click", () => DOM.fileInput.click());
 
   DOM.fileInput.addEventListener("change", () => {
     if (!DOM.fileInput.files.length) return;
@@ -364,41 +380,80 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    DOM.downloadText.textContent = "正在解密并下载文件...";
+    DOM.downloadText.textContent = "正在下载并解密文件...";
     DOM.downloadProgressBar.style.width = 0;
 
     // 下载中
     setDownloadState(DownloadState.DOWNLOADING);
 
     let isBackground = false;
-    try {
-      await saveFile(
-        retrievedFileInfo,
-        password,
-        ({ totalChunks, finishedChunks }) => {
-          if (totalChunks) {
-            const progress = (finishedChunks / totalChunks) * 100;
-            DOM.downloadProgressBar.style.width = `${progress}%`;
-            DOM.downloadText.textContent =
-              "正在下载并解密文件" + `（${progress.toFixed(1)}%）...`;
-          } else {
-            isBackground = true;
+    let errorType = 0; // 0：没问题，1：通用错误，2：安全错误
+
+    const trySaveFile = async (saveFileFn) => {
+      try {
+        await saveFileFn(
+          retrievedFileInfo,
+          password,
+          ({ totalChunks, finishedChunks }) => {
+            // 前台下载，支持进度显示
+            if (totalChunks > 0) {
+              const progress = (finishedChunks / totalChunks) * 100;
+              DOM.downloadProgressBar.style.width = `${progress}%`;
+              DOM.downloadText.textContent =
+                "正在下载并解密文件" + `（${progress.toFixed(1)}%）...`;
+            }
+            // 使用ServicWorker下载
+            else if (totalChunks === 0) {
+              isBackground = true;
+            }
+            // totalChunks==-1,未安装证书
+            else {
+              errorType = 2;
+            }
           }
+        );
+      } catch (error) {
+        errorType = 1;
+        console.error(error);
+      }
+
+      // 通用错误，直接提示失败
+      if (errorType === 1) {
+        await showAlert("下载失败！", "", "error");
+        setDownloadState(DownloadState.FILE_INFO);
+      }
+      // 安全错误，提示安装证书
+      else if (errorType == 2) {
+        const confirm = await showAlert(
+          "未安装证书",
+          '<p>请在浏览器中导入<a href="./certfile.crt">可信证书</a>确保下载稳定</p>' +
+            "<code>未安装证书而强行下载文件可能会导致页面崩溃</code>",
+          "info",
+          { type: "error", text: "强行下载" }
+        );
+
+        // 强行下载
+        if (confirm) {
+          errorType = 0;
+          await trySaveFile(saveFileByBlob);
         }
-      );
-    } catch (error) {
-      await showAlert("下载失败！", "", "error");
-      console.error(error);
-      setDownloadState(DownloadState.FILE_INFO);
-      return;
-    }
+        // 返回下载页
+        else {
+          setDownloadState(DownloadState.FILE_INFO);
+        }
+      }
+    };
+
+    await trySaveFile(saveFile);
 
     // 下载完成
-    DOM.downloadProgressBar.style.width = `100%`;
-    DOM.downloadText.textContent = isBackground
-      ? "文件已在后台下载并解密！"
-      : "文件下载并解密完成！";
-    setDownloadState(DownloadState.DOWNLOADED);
+    if (errorType === 0) {
+      DOM.downloadProgressBar.style.width = `100%`;
+      DOM.downloadText.textContent = isBackground
+        ? "文件已在后台下载并解密！"
+        : "文件下载并解密完成！";
+      setDownloadState(DownloadState.DOWNLOADED);
+    }
   });
 
   // 返回下载

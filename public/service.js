@@ -1,5 +1,5 @@
 const DEFAULT_CHUNCK_SIZE = 5 * 1024 * 1024; // 默认分片大小：5MB
-const BIG_FILE_SIZE = 50 * 1024 * 1024; // 大文件将使用流式下载方案：50MB
+const BIG_FILE_SIZE = 200 * 1024 * 1024; // 大文件将使用流式下载方案：200MB
 
 // 更新文件
 async function refreshFile(hash, expire) {
@@ -173,13 +173,17 @@ async function encryptChunk(chunk, password) {
 
 // 保存文件
 async function saveFile(fileInfo, password, onProgress) {
-  if (fileInfo.size < BIG_FILE_SIZE)
-    await saveFileByBlob(fileInfo, password, onProgress);
-  else if (window.showSaveFilePicker && detectChrome91Plus())
-    await saveFileByFileApi(fileInfo, password, onProgress);
-  else if (navigator.serviceWorker)
-    await saveFileByServiceWorker(fileInfo, password, onProgress);
-  else throw new Error("不支持下载！");
+  if (location.protocol === "https:" && fileInfo.size > BIG_FILE_SIZE) {
+    if (window.showSaveFilePicker && detectChrome91Plus()) {
+      await saveFileByFileApi(fileInfo, password, onProgress);
+      return;
+    }
+    if (navigator.serviceWorker) {
+      await saveFileByServiceWorker(fileInfo, password, onProgress);
+      return;
+    }
+  }
+  await saveFileByBlob(fileInfo, password, onProgress);
 }
 
 // 使用全部存入Blob方案下载文件
@@ -232,9 +236,18 @@ async function saveFileByFileApi(fileInfo, password, onProgress) {
   await writable.close();
 }
 
-// 使用Service Worker下载文件
+// 使用Service Worker下载文件 - 需要信任根证书
 async function saveFileByServiceWorker(fileInfo, password, onProgress) {
-  await registServiceWorker("./download.worker.js");
+  try {
+    await registServiceWorker("./download.worker.js");
+  } catch (error) {
+    if (error.name === "SecurityError") {
+      // 标记为安全错误
+      onProgress({ totalChunks: -1 });
+      return;
+    }
+  }
+
   // 通知ServiceWorker要下载的文件
   navigator.serviceWorker.controller.postMessage({
     type: "FILE",

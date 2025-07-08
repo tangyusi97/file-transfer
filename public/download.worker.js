@@ -11,7 +11,7 @@ let password = null;
 self.addEventListener("fetch", (event) => {
   if (event.request.url.includes("/savefile") && fileInfo && password) {
     // 消费数据，避免密码被重复使用
-    const _fileInfo = { ...fileInfo };
+    const _fileInfo = Object.assign({}, fileInfo);
     const _password = password;
     fileInfo = null;
     password = null;

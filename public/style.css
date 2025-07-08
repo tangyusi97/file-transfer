@@ -448,6 +448,12 @@ select.input-field {
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
 }
 
+.btn-error,
+.btn-error:hover {
+  background: var(--error);
+  box-shadow: none;
+}
+
 .btn:disabled {
   background: rgba(0, 0, 0, 0.04);
   color: rgba(0, 0, 0, 0.25);
@@ -506,6 +512,14 @@ select.input-field {
   padding: 20px;
   text-align: left;
   border: 1px solid var(--border-light);
+}
+
+#big-file-warn {
+  background: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: justify;
 }
 
 .right-panel {
@@ -628,24 +642,8 @@ select.input-field {
 }
 
 .alert-button {
-  flex: 1;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 500;
   font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
   height: 40px;
-}
-
-.alert-confirm {
-  background: var(--primary);
-  color: white;
-}
-
-.alert-confirm:hover {
-  background: var(--primary-hover);
 }
 
 @keyframes pulse {

@@ -228,9 +228,11 @@
           </div>
 
           <div class="btn-row" id="download-btns" style="display: none;">
-            <button class="btn" id="download-btn">下载文件</button>
+            <button class="btn" id="download-btn">下载并解密</button>
             <button class="btn btn-secondary" id="back-to-search">返回</button>
           </div>
+
+          <div id="big-file-warn" style="display: none;"></div>
 
           <div class="progress-container" id="download-progress-container" style="display: none;">
             <div class="progress-bar">
@@ -252,7 +254,7 @@
           <li>本服务使用AES算法在本地加密和解密文件，确保文件在传输和存储过程中始终处于加密状态，服务器无法解密您的文件，提供真正的隐私保护。</li>
           <li>文件传输流程：首先选择要传输的文件并设置密码，上传成功后系统会生成唯一的文件提取码，接收方输入提取码和密码后即可下载并解密文件。<i>扫描二维码可便捷复制文件分享信息。</i></li>
           <li>出于安全考虑，<strong>您必须提供并妥善保管加密密码</strong>。输入错误的密码并不会影响您的文件下载，但会因为解密失败而导致文件无法正常打开。</li>
-          <li>本服务使用大文件分片上传和下载技术，无惧网络波动，能够确保您的大文件可靠传输。<i id="goto-https"></i>
+          <li>本服务使用大文件分片上传和下载技术，突破文件大小限制，能够确保您的大文件可靠传输。
           </li>
           <li><strong>严禁使用本服务传输超出密级范围的文件！</strong></li>
         </ol>
@@ -262,11 +264,12 @@
 
   <div class="custom-alert" id="custom-alert">
     <div class="alert-content" id="alert-content">
-      <div class="alert-icon" id="alert-icon">ℹ</div>
+      <div class="alert-icon" id="alert-icon">i</div>
       <h2 class="alert-title" id="alert-title">提示</h2>
       <p class="alert-message" id="alert-message">这是一条提示信息</p>
       <div class="btn-row">
-        <button class="alert-button alert-confirm" id="alert-confirm">确定</button>
+        <button class="btn alert-button" id="alert-confirm">确定</button>
+        <button class="btn btn-secondary alert-button" id="alert-cancel">取消</button>
       </div>
     </div>
   </div>
