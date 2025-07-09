@@ -425,9 +425,9 @@ document.addEventListener("DOMContentLoaded", function () {
       // 安全错误，提示安装证书
       else if (errorType == 2) {
         const confirm = await showAlert(
-          "未安装证书",
-          '<p>请在浏览器中导入<a href="./certfile.crt">可信证书</a>确保下载稳定</p>' +
-            "<code>未安装证书而强行下载文件可能会导致页面崩溃</code>",
+          "未信任证书",
+          '<p>请<a href="./certfile.crt">导入可信证书</a>或将本网站添加安全例外</p>' +
+            "<code>未信任证书而强行下载文件可能会导致页面崩溃</code>",
           "info",
           { type: "error", text: "强行下载" }
         );

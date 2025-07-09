@@ -1,6 +1,8 @@
 module.exports = {
   // httpPort: 88,                     // http服务端口
   httpsPort: 88,                    // https服务端口
+  certFile: './public/certfile.crt',// 证书文件
+  keyFile: './private.key',         // 私钥文件
   apiKey: "SECRET_API_KEY",         // 接口鉴权密钥
   uploadDir: "./uploads",           // 文件存储目录
   dataDir: "./data",                // 数据文件目录

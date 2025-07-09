@@ -8,17 +8,20 @@ const config = require("./config");
 
 const app = express();
 app.disable("x-powered-by");
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
-app.use(express.static("public"));
+
+const uploadDir = path.join(__dirname, config.uploadDir);
+const dataDir = path.join(__dirname, config.dataDir);
 
 // 确保目录存在
-[config.uploadDir, config.dataDir].forEach((dir) => {
+[uploadDir, dataDir].forEach((dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
 // 数据文件路径
-const FILES_DB = path.join(config.dataDir, "files.json");
-const CODES_DB = path.join(config.dataDir, "codes.json");
+const FILES_DB = path.join(dataDir, "files.json");
+const CODES_DB = path.join(dataDir, "codes.json");
 
 // 初始化数据存储
 const initDb = (filePath, defaultValue = {}) => {
@@ -228,17 +231,18 @@ http.createServer(app).listen(httpPort, () => {
 });
 
 // 启动https服务
-https
-  .createServer(
-    {
-      cert: fs.readFileSync("./public/certfile.crt"),
-      key: fs.readFileSync("./private.key"),
-    },
-    app
-  )
-  .listen(httpsPort, () => {
-    console.log(`HTTPS server running on port ${httpsPort}`);
-  });
+const certPath = path.join(__dirname, config.certFile);
+const keyPath = path.join(__dirname, config.keyFile);
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+  https
+    .createServer(
+      { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) },
+      app
+    )
+    .listen(httpsPort, () => {
+      console.log(`HTTPS server running on port ${httpsPort}`);
+    });
+}
 
 // // 80端口重定向到https
 // http

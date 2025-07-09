@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.js --watch server.js --watch config.js",
-    "bundle": "ncc build server.js -o ./",
-    "build": "ncc build server.js -o dist --minify --source-map"
+    "build": "ncc build server.js"
   },
   "keywords": [],
   "author": "",

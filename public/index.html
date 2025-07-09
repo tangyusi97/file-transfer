@@ -39,7 +39,7 @@
       if (!checkAsync()) {
         banner.style.backgroundColor = "#ff4d4f";
         banner.innerHTML =
-          "<strong>警告：</strong>您正在使用不兼容的浏览器，本页面无法正常使用！建议您更换Chrome 56 以上版本的浏览器访问以获得最佳体验。"
+          "<strong>警告：</strong>您正在使用不兼容的浏览器，本页面无法正常使用！建议您更换Chrome_56或Firefox_65以上版本的浏览器访问以获得最佳体验。"
         body.appendChild(banner);
       }
 
@@ -49,7 +49,7 @@
         if (location.protocol === 'http:') return;
         banner.style.backgroundColor = "#faad14";
         banner.innerHTML =
-          "<strong>警告：</strong>您正在使用过时的浏览器，这将导致本页面功能受限（无法使用后台下载功能）。建议您更换Chrome 56 以上版本的浏览器访问以获得最佳体验。" +
+          "<strong>警告：</strong>您正在使用过时的浏览器，这将导致本页面功能受限（无法使用后台下载功能）。建议您更换Chrome_56或Firefox_65以上版本的浏览器访问以获得最佳体验。" +
           "<span style='float:right;color:#000;cursor:pointer' onClick='javascript:document.getElementById(\"browser-compatible-banner\").style.display=\"none\";'>&times;</span>";
         body.appendChild(banner);
       }

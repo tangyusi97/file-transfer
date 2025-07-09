@@ -208,6 +208,7 @@ async function saveFileByBlob(fileInfo, password, onProgress) {
   }
   const url = URL.createObjectURL(new Blob(buffers));
   clickDownload(url, fileInfo.name);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 // 使用File System Access API 方案下载文件
@@ -269,10 +270,13 @@ async function saveFileByServiceWorker(fileInfo, password, onProgress) {
 // 点击下载
 function clickDownload(href, download) {
   const a = document.createElement("a");
+  a.style.display = "none";
   a.href = href;
   if (download) a.download = download;
   // a.target = "_blank";
+  document.body.appendChild(a);
   a.click();
+  setTimeout(() => document.body.removeChild(a), 100);
 }
 
 // 下载并解密文件分片
