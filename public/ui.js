@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", function () {
         size: selectedFile.size,
         hashs,
         expireTime: fileExpireTime,
-      });
+      }, password);
 
       DOM.accessCode.textContent = code;
 
@@ -377,6 +377,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!password) {
       await showAlert("请输入解密密码", "", "error");
+      return;
+    }
+
+    if (!verifyPassword(retrievedFileInfo, password)) {
+      await showAlert("密码校验不通过", "", "error");
       return;
     }
 

@@ -1,5 +1,6 @@
 const DEFAULT_CHUNCK_SIZE = 5 * 1024 * 1024; // 默认分片大小：5MB
 const BIG_FILE_SIZE = 200 * 1024 * 1024; // 大文件将使用流式下载方案：200MB
+const SECRET_API_KEY = "SECRET_API_KEY";
 
 // 更新文件
 async function refreshFile(hash, expire) {
@@ -8,7 +9,7 @@ async function refreshFile(hash, expire) {
       method: "post",
       body: JSON.stringify({ hash, expire }),
       headers: {
-        "x-api-key": "SECRET_API_KEY",
+        "x-api-key": SECRET_API_KEY,
         "Content-Type": "application/json",
       },
     })
@@ -28,7 +29,7 @@ async function uploadFile({ blob, hash, expire, onProgress }) {
     await xhrFetch(`/api/upload`, {
       method: "post",
       headers: {
-        "X-API-Key": "SECRET_API_KEY",
+        "X-API-Key": SECRET_API_KEY,
       },
       body: formData,
       onProgress({ percentage }) {
@@ -42,18 +43,26 @@ async function uploadFile({ blob, hash, expire, onProgress }) {
 }
 
 // 请求提取码
-async function getFileCode({ name, size, hashs, expireTime }) {
+async function getFileCode({ name, size, hashs, expireTime }, password) {
+  // 生成密码哈希值，用于下载前校验
+  const pwdHash = CryptoJS.SHA256(password + hashs.join("")).toString();
+  // 提交保存文件信息
   const res = await (
     await fetch(`/api/generate-code`, {
       method: "post",
       headers: {
-        "X-API-Key": "SECRET_API_KEY",
+        "X-API-Key": SECRET_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, size, hashs, expireTime }),
+      body: JSON.stringify({ name, size, hashs, pwdHash, expireTime }),
     })
   ).json();
   return res.code;
+}
+
+// 校验文件密码
+function verifyPassword({ hashs, pwdHash }, password) {
+  return CryptoJS.SHA256(password + hashs.join("")).toString() === pwdHash;
 }
 
 // 查询提取码

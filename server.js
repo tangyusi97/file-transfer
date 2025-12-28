@@ -150,6 +150,7 @@ app.post("/api/generate-code", apiKeyAuth, (req, res) => {
     name,
     size,
     hashs,
+    pwdHash,
     expireTime = Date.now() + config.defaultExpire * 1000,
   } = req.body;
   if (!Array.isArray(hashs) || hashs.length === 0) {
@@ -165,7 +166,7 @@ app.post("/api/generate-code", apiKeyAuth, (req, res) => {
 
   // 生成唯一提取码
   const code = generateUniqueCode(codesDb);
-  codesDb[code] = { name, size, hashs, expireTime, ip: req.ip };
+  codesDb[code] = { name, size, hashs, pwdHash, expireTime, ip: req.ip };
   saveCodesDb();
 
   res.json({ code, expireTime });

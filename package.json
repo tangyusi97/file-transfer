@@ -1,6 +1,6 @@
 {
   "name": "file-transfer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,11 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0",
-    "multer": "^2.0.1"
+    "express": "^5.2.1",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.38.3",
-    "nodemon": "^3.1.10"
+    "@vercel/ncc": "^0.38.4",
+    "nodemon": "^3.1.11"
   }
 }
